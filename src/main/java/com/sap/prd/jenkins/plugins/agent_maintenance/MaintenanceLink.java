@@ -55,18 +55,22 @@ public class MaintenanceLink extends ManagementLink {
 
   @Override
   public String getDisplayName() {
-    List<MaintenanceAction> all = getTargets();
+    List<MaintenanceAction> all = null;
+    try {
+      all = getTargets();
+    } catch (IOException e) {
+      LOGGER.log(Level.WARNING, "Error while reading maintenance windows", e);
+      return Messages.MaintenanceLink_displayName();
+    }
     boolean hasAgents = all.stream().anyMatch(MaintenanceAction::isAgent);
     boolean hasClouds = all.stream().anyMatch(MaintenanceAction::isCloud);
 
     if (hasAgents && !hasClouds) {
       return Messages.MaintenanceLink_displayName_agent();
     }
-
     if (hasClouds && !hasAgents) {
       return Messages.MaintenanceLink_displayName_cloud();
     }
-
     return Messages.MaintenanceLink_displayName();
   }
 
