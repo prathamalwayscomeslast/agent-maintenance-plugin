@@ -55,20 +55,18 @@ public class MaintenanceLink extends ManagementLink {
 
   @Override
   public String getDisplayName() {
-    boolean hasClouds, hasAgents;
-    try {
-      hasClouds = !getCloudTargets().isEmpty();
-      hasAgents = !getAgentTargets().isEmpty();
-    } catch (IOException e) {
-      LOGGER.log(Level.WARNING, "Error while reading cloud metadata", e);
-      throw new RuntimeException(e);
-    }
+    List<MaintenanceAction> all = getTargets();
+    boolean hasAgents = all.stream().anyMatch(MaintenanceAction::isAgent);
+    boolean hasClouds = all.stream().anyMatch(MaintenanceAction::isCloud);
+
     if (hasAgents && !hasClouds) {
       return Messages.MaintenanceLink_displayName_agent();
     }
+
     if (hasClouds && !hasAgents) {
       return Messages.MaintenanceLink_displayName_cloud();
     }
+
     return Messages.MaintenanceLink_displayName();
   }
 
@@ -124,11 +122,13 @@ public class MaintenanceLink extends ManagementLink {
       }
     }
 
-    return targetList;
+    return targetList.stream()
+        .filter(action -> PermissionManager.canView(action.getTarget()))
+        .toList();
   }
 
   /**
-   * Gets all Agents' maintenance actions.
+   * Gets all Agents' maintenance actions (called by jelly).
    *
    * @return List of all Agent actions.
    */
@@ -140,7 +140,7 @@ public class MaintenanceLink extends ManagementLink {
   }
 
   /**
-   * Gets all Clouds' maintenance actions.
+   * Gets all Clouds' maintenance actions (called by jelly).
    *
    * @return List of all Cloud actions.
    */
@@ -242,7 +242,8 @@ public class MaintenanceLink extends ManagementLink {
    */
   @JavaScriptMethod
   public boolean deleteMaintenance(String id, String targetKey) {
-    if (hasPermission(targetKey)) {
+    MaintenanceTarget target = MaintenanceTarget.fromKey(targetKey);
+    if (PermissionManager.canDelete(target)) {
       try {
         MaintenanceHelper.getInstance().deleteMaintenanceWindow(targetKey, id);
         return true;
@@ -265,7 +266,8 @@ public class MaintenanceLink extends ManagementLink {
     List<String> deletedList = new ArrayList<>();
     for (Entry<String, String> entry : mwList.entrySet()) {
       String targetKey = entry.getValue();
-      if (hasPermission(targetKey)) {
+      MaintenanceTarget target = MaintenanceTarget.fromKey(targetKey);
+      if (PermissionManager.canDelete(target)) {
         String id = entry.getKey();
         try {
           MaintenanceHelper.getInstance().deleteMaintenanceWindow(targetKey, id);
@@ -288,16 +290,14 @@ public class MaintenanceLink extends ManagementLink {
     Map<String, Boolean> statusList = new HashMap<>();
     for (MaintenanceAction action : getTargets()) {
       try {
-        if (!action.hasPermissions()) {
+        if (!PermissionManager.canView(action.getTarget())) {
           continue;
         }
 
         MaintenanceTarget target = action.getTarget();
-        if (target != null) {
-          for (MaintenanceWindow mw : MaintenanceHelper.getInstance().getMaintenanceWindows(target.toKey())) {
-            if (!mw.isMaintenanceOver()) {
-              statusList.put(mw.getId(), mw.isMaintenanceScheduled());
-            }
+        for (MaintenanceWindow mw : MaintenanceHelper.getInstance().getMaintenanceWindows(target.toKey())) {
+          if (!mw.isMaintenanceOver()) {
+            statusList.put(mw.getId(), mw.isMaintenanceScheduled());
           }
         }
       } catch (IOException ioe) {
@@ -305,34 +305,6 @@ public class MaintenanceLink extends ManagementLink {
       }
     }
     return statusList;
-  }
-
-  /**
-   * Returns list of available clouds for multi select.
-   *
-   * @return List of available clouds
-   */
-  public List<CloudOption> getAvailableClouds() {
-    List<CloudOption> options = new ArrayList<>();
-    Map<String, Boolean> duplicateMap = new HashMap<>();
-    Jenkins j = Jenkins.get();
-
-    for (Cloud cloud : j.clouds) {
-      duplicateMap.put(cloud.name, CLOUD_UUID_STORE.hasDuplicates(cloud.name));
-    }
-
-    for (Cloud cloud : j.clouds) {
-      String uuid = CLOUD_UUID_STORE.getUuidIfPresent(cloud);
-      boolean hasDuplicate = duplicateMap.getOrDefault(cloud.name, false);
-      String shortUuid = (uuid == null) ? null : uuid.substring(0, 8);
-      options.add(new CloudOption(cloud.name, uuid, shortUuid, hasDuplicate));
-    }
-    return options;
-  }
-
-  private boolean hasPermission(String targetKey) {
-    MaintenanceAction action = new MaintenanceAction(MaintenanceTarget.fromKey(targetKey));
-    return action.hasPermissions();
   }
 
   @Restricted(NoExternalUse.class)

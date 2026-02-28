@@ -46,7 +46,7 @@
                   <th>${%Auto Connect}</th>
                 </j:if>
                 <th>${%Created By}</th>
-                <p:hasAnyPermission permissions="${it.CONFIGURE_AND_DISCONNECT}">
+                <j:if test="${it.hasModifyPermission()}">
                   <th data-sort-disable="true">
                     <l:rowSelectionController class="am__checkbox">
                       <button type="button" id="select-active" class="jenkins-button jenkins-button--tertiary">
@@ -64,7 +64,7 @@
                     </l:rowSelectionController>
                   </th>
                   <th/>
-                </p:hasAnyPermission>
+                </j:if>
               </tr>
             </thead>
             <tbody>
@@ -80,7 +80,7 @@
                     <td class="center"><f:checkbox readOnlyMode="true" checked="${m.takeOnline ? 'true' : null}"/></td>
                   </j:if>
                   <td>${m.userid}</td>
-                  <p:hasAnyPermission permissions="${it.CONFIGURE_AND_DISCONNECT}">
+                  <j:if test="${it.hasDeletePermission()}">
                     <td>
                       <f:checkbox class="am__checkbox" name="${mid}"/>
                     </td>
@@ -93,12 +93,12 @@
                                 tooltip="Delete this maintenance window"/>
                       </div>
                     </td>
-                  </p:hasAnyPermission>
+                  </j:if>
                 </tr>
               </j:forEach>
             </tbody>
           </table>
-          <p:hasAnyPermission permissions="${it.CONFIGURE_AND_DISCONNECT}">
+          <j:if test="${it.hasDeletePermission()}">
             <f:bottomButtonBar>
               <button type="button" id="edit-button" class="jenkins-button jenkins-button--primary  ${mw.size() == 0?'jenkins-hidden':''}">${%Edit}</button>
               <button id="add-button" type="button"
@@ -107,7 +107,7 @@
                       class="jenkins-button jenkins-button--primary delete-selected-button ${mw.size() == 0?'jenkins-hidden':''}"
                       data-message-success="${%All selected maintenance windows were deleted successfully}" disabled="true">${%Delete selected}</button>
             </f:bottomButtonBar>
-          </p:hasAnyPermission>
+          </j:if>
         </f:form>
         <br/>
         <br/>
@@ -136,12 +136,12 @@
                   <th>${%Auto Connect}</th>
                 </j:if>
                 <th>${%Created By}</th>
-                <p:hasAnyPermission permissions="${it.CONFIGURE_AND_DISCONNECT}">
+                <j:if test="${it.hasModifyPermission()}">
                   <th data-sort-disable="true">
                     <l:rowSelectionController class="am__checkbox"/>
                   </th>
                   <th></th>
-                </p:hasAnyPermission>
+                </j:if>
               </tr>
             </thead>
             <tbody>
@@ -157,7 +157,7 @@
                     <td class="center"><f:checkbox readOnlyMode="true" checked="${m.takeOnline ? 'true' : null}"/></td>
                   </j:if>
                   <td>${m.userid}</td>
-                  <p:hasAnyPermission permissions="${it.CONFIGURE_AND_DISCONNECT}">
+                  <j:if test="${it.hasDeletePermission()}">
                     <td>
                       <f:checkbox class="am__checkbox" name="${mid}"/>
                     </td>
@@ -170,19 +170,19 @@
                                 tooltip="Delete this recurring maintenance window"/>
                       </div>
                     </td>
-                  </p:hasAnyPermission>
+                  </j:if>
                 </tr>
               </j:forEach>
             </tbody>
           </table>
-          <p:hasAnyPermission permissions="${it.CONFIGURE_AND_DISCONNECT}">
+          <j:if test="${it.hasDeletePermission()}">
             <f:bottomButtonBar>
               <button type="button" id="edit-recurring" class="jenkins-button jenkins-button--primary ${recurring.size() == 0?'jenkins-hidden':''}">${%Edit}</button>
               <button type="button" id="add-recurring" class="jenkins-button jenkins-button--primary">${%Add}</button>
               <button type="button" id="delete-selected-recurring-action" class="jenkins-button delete-selected-button jenkins-button--primary ${recurring.size() == 0?'jenkins-hidden':''}"
                       data-message-success="${%All selected recurring maintenance windows were deleted successfully}" disabled="true">${%Delete selected}</button>
             </f:bottomButtonBar>
-          </p:hasAnyPermission>
+          </j:if>
         </f:form>
         <br/>
         <br/>
@@ -208,9 +208,9 @@
                       data-message="${%Enable Agent Maintenance Availability}">${%Enable}</button>
             </f:entry>
           </l:hasPermission>
-          <j:if test="${!it.hasPermissions()}">
+          <p:hasNoPermission permissions="${it.getAgentComputer().CONFIGURE}">
             ${%missingPermission}
-          </j:if>
+          </p:hasNoPermission>
         </j:if>
       </j:if>
     </l:main-panel>

@@ -14,7 +14,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -64,30 +63,9 @@ public class MaintenanceAction implements Action {
       if (!MaintenanceHelper.getInstance().isValidTarget(target.toKey())) {
         return false;
       }
-
-      if (isAgent()) {
-        Computer computer = Jenkins.get().getComputer(target.getName());
-        return computer != null
-                && (computer.hasPermission(Computer.DISCONNECT)
-                        || computer.hasPermission(Computer.CONFIGURE)
-                        || computer.hasPermission(Computer.EXTENDED_READ))
-                && computer.getNode() != null;
-      }
-      return Jenkins.get().hasPermission(Jenkins.ADMINISTER);
+      return PermissionManager.canView(target);
     } catch (IOException e) {
       return false;
-    }
-  }
-
-  protected void checkPermission(Permission... permissions) {
-    if (isAgent()) {
-      Computer c = Jenkins.get().getComputer(target.getName());
-      if (c == null) {
-        throw new IllegalStateException("Agent '" + target.getName() + "' no longer exists");
-      }
-      c.checkAnyPermission(permissions);
-    } else { // For cloud
-      Jenkins.get().checkPermission(Jenkins.ADMINISTER);
     }
   }
 
@@ -103,7 +81,7 @@ public class MaintenanceAction implements Action {
   @Override
   public String getDisplayName() {
     if (isVisible()) {
-      if (hasPermissions()) {
+      if (PermissionManager.canModify(target)) {
         return Messages.MaintenanceAction_maintenanceWindows();
       } else {
         return Messages.MaintenanceAction_view();
@@ -182,58 +160,30 @@ public class MaintenanceAction implements Action {
   }
 
   /**
-   * Checks if the user has permissions to access MaintenanceWindows.
+   * Checks if the user can view maintenance windows for this target (called by jelly).
    *
-   * @return true if they do.
+   * @return true if they can view.
    */
   public boolean hasPermissions() {
-    if (isAgent()) {
-      Computer c = Jenkins.get().getComputer(target.getName());
-      return c != null
-              && (c.hasPermission(Computer.DISCONNECT)
-              || c.hasPermission(Computer.CONFIGURE)
-              || c.hasPermission(Computer.EXTENDED_READ));
-    } else {
-      return Jenkins.get().hasPermission(Jenkins.ADMINISTER);
-    }
+    return PermissionManager.canView(target);
   }
 
   /**
-   * Checks the given permissions.
+   * Checks if the user can add or edit maintenance windows for this target (called by jelly).
    *
-   * @param permissions A group of permissions to be checked.
-   * @return true if all permissions are granted.
+   * @return true if they can modify.
    */
-  public boolean hasPermissions(Permission... permissions) {
-    if (isAgent()) {
-      Computer c = Jenkins.get().getComputer(target.getName());
-      return c != null && Arrays.stream(permissions).allMatch(c::hasPermission);
-    } else {
-      return Jenkins.get().hasPermission(Jenkins.ADMINISTER);
-    }
+  public boolean hasModifyPermission() {
+    return PermissionManager.canModify(target);
   }
 
   /**
-   * Checks if the user has permissions to delete MaintenanceWindows.
+   * Checks if the user can delete maintenance windows for this target.
    *
-   * @return true if they do.
+   * @return true if they can delete.
    */
   public boolean hasDeletePermission() {
-    if (isAgent()) {
-      Computer c = Jenkins.get().getComputer(target.getName());
-      return c != null && (c.hasPermission(Computer.DISCONNECT) || c.hasPermission(Computer.CONFIGURE));
-    } else {
-      return Jenkins.get().hasPermission(Jenkins.ADMINISTER);
-    }
-  }
-
-  /**
-   * Checks if the user has permissions to delete Cloud windows.
-   *
-   * @return true if they do.
-   */
-  public boolean hasCloudDeletePermission() {
-    return Jenkins.get().hasPermission(Jenkins.ADMINISTER);
+    return PermissionManager.canDelete(target);
   }
 
   /**
@@ -321,7 +271,7 @@ public class MaintenanceAction implements Action {
    */
   @POST
   public HttpResponse doAdd(StaplerRequest2 req) throws IOException, ServletException {
-    checkPermission(CONFIGURE_AND_DISCONNECT);
+    PermissionManager.checkCanModify(target);
 
     JSONObject src = req.getSubmittedForm();
     MaintenanceWindow mw = req.bindJSON(MaintenanceWindow.class, src);
@@ -339,7 +289,7 @@ public class MaintenanceAction implements Action {
    */
   @POST
   public void doAddRecurring(StaplerRequest2 req, StaplerResponse2 rsp) throws IOException, ServletException {
-    checkPermission(CONFIGURE_AND_DISCONNECT);
+    PermissionManager.checkCanModify(target);
 
     JSONObject src = req.getSubmittedForm();
     RecurringMaintenanceWindow rmw = req.bindJSON(RecurringMaintenanceWindow.class, src);
@@ -354,7 +304,7 @@ public class MaintenanceAction implements Action {
    */
   @JavaScriptMethod
   public String[] deleteMultiple(String[] ids) {
-    checkPermission(CONFIGURE_AND_DISCONNECT);
+    PermissionManager.checkCanDelete(target);
     List<String> deletedList = new ArrayList<>();
     for (String id : ids) {
       try {
@@ -375,7 +325,7 @@ public class MaintenanceAction implements Action {
   @JavaScriptMethod
   public Map<String, Boolean> getMaintenanceStatus() {
     Map<String, Boolean> statusList = new HashMap<>();
-    if (hasPermissions()) {
+    if (PermissionManager.canView(target)) {
       try {
         for (MaintenanceWindow mw : MaintenanceHelper.getInstance().getMaintenanceWindows(target.toKey())) {
           if (!mw.isMaintenanceOver()) {
@@ -396,7 +346,7 @@ public class MaintenanceAction implements Action {
    */
   @JavaScriptMethod
   public String[] deleteMultipleRecurring(String[] ids) {
-    checkPermission(CONFIGURE_AND_DISCONNECT);
+    PermissionManager.checkCanDelete(target);
     List<String> deletedList = new ArrayList<>();
     for (String id : ids) {
       try {
@@ -417,7 +367,7 @@ public class MaintenanceAction implements Action {
   @JavaScriptMethod
   public boolean deleteMaintenance(String id) {
     try {
-      checkPermission(CONFIGURE_AND_DISCONNECT);
+      PermissionManager.checkCanDelete(target);
       if (Util.fixEmptyAndTrim(id) == null) {
         return false;
       }
@@ -442,7 +392,7 @@ public class MaintenanceAction implements Action {
   @JavaScriptMethod
   public boolean deleteRecurringMaintenance(String id) {
     try {
-      checkPermission(CONFIGURE_AND_DISCONNECT);
+      PermissionManager.checkCanDelete(target);
       if (Util.fixEmptyAndTrim(id) == null) {
         return false;
       }
@@ -469,7 +419,7 @@ public class MaintenanceAction implements Action {
    */
   @POST
   public synchronized HttpResponse doConfigSubmit(StaplerRequest2 req) throws IOException, ServletException {
-    checkPermission(Computer.CONFIGURE);
+    PermissionManager.checkCanModify(target);
 
     JSONObject src = req.getSubmittedForm();
 
@@ -500,7 +450,7 @@ public class MaintenanceAction implements Action {
   public void doEnable(StaplerResponse2 rsp) throws IOException {
     Computer c = getAgentComputer();
     if (c != null) {
-      c.checkPermission(Computer.CONFIGURE);
+      PermissionManager.checkCanModify(target);
       MaintenanceHelper.getInstance().injectRetentionStrategy(c);
     }
     rsp.sendRedirect(".");
@@ -516,7 +466,7 @@ public class MaintenanceAction implements Action {
   public void doDisable(StaplerResponse2 rsp) throws IOException {
     Computer c = getAgentComputer();
     if (c != null) {
-      c.checkPermission(Computer.CONFIGURE);
+      PermissionManager.checkCanModify(target);
       MaintenanceHelper.getInstance().removeRetentionStrategy(c);
     }
 
@@ -536,15 +486,14 @@ public class MaintenanceAction implements Action {
         rsp.sendError(HttpServletResponse.SC_NOT_FOUND);  // 404
         return;
       }
-      c.checkAnyPermission(Computer.EXTENDED_READ, Computer.CONFIGURE, Computer.DISCONNECT);
     } else {
       Cloud cloud = getCloud();
       if (cloud == null) {
         rsp.sendError(HttpServletResponse.SC_NOT_FOUND);
         return;
       }
-      Jenkins.get().checkPermission(Jenkins.ADMINISTER);
     }
+    PermissionManager.checkCanView(target);
 
     req.getView(this, "index.jelly").forward(req, rsp);
   }

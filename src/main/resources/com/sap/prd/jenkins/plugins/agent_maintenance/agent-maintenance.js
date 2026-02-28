@@ -392,8 +392,7 @@ Behaviour.specify("#delete-selected-button-link, #delete-selected-clouds", 'agen
     for (let checked of checkedRows) {
       let row = checked.closest("TR");
       let id = row.id;
-      let targetKey = row.getAttribute("data-target-key");
-      checkedList[id] = targetKey;
+      checkedList[id] = row.getAttribute("data-target-key");
       size++;
     }
     if (size > 0) {
