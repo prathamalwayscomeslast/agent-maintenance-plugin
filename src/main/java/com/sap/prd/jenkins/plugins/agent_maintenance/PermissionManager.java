@@ -3,6 +3,7 @@ package com.sap.prd.jenkins.plugins.agent_maintenance;
 import hudson.model.Computer;
 import hudson.security.AccessDeniedException3;
 import hudson.security.Permission;
+import java.util.Arrays;
 import jenkins.model.Jenkins;
 
 /**
@@ -59,6 +60,28 @@ public final class PermissionManager {
   }
 
   /**
+   * Returns true if the current user has the given permissions for this target.
+   *
+   * @param target the target to check permissions for
+   * @param checkAll if true, all permissions must be granted; otherwise any permission is sufficient
+   * @param permissions the permissions to check for
+   *
+   * @return true if the user has the given permissions
+   */
+  public static boolean hasPermissions(MaintenanceTarget target, boolean checkAll, Permission... permissions) {
+    return switch (target.getType()) {
+      case AGENT -> {
+        Computer c = getComputer(target);
+        yield c != null
+            && (checkAll ? Arrays.stream(permissions).allMatch(c::hasPermission)
+            : Arrays.stream(permissions).anyMatch(c::hasPermission));
+      }
+      case CLOUD -> checkAll ? Arrays.stream(permissions).allMatch(Jenkins.get()::hasPermission)
+          : Arrays.stream(permissions).anyMatch(Jenkins.get()::hasPermission);
+    };
+  }
+
+  /**
    * Throws AccessDeniedException if the user cannot VIEW.
    */
   public static void checkCanView(MaintenanceTarget target) {
@@ -88,6 +111,31 @@ public final class PermissionManager {
       throwDenied(target.getType() == MaintenanceTarget.TargetType.CLOUD
           ? Jenkins.ADMINISTER
           : Computer.CONFIGURE);
+    }
+  }
+
+  /**
+   * Throws AccessDeniedException if the user does not have the given permissions.
+   *
+   * @param target the target to check permissions for
+   * @param checkAll if true, all permissions must be granted; otherwise any permission is sufficient
+   * @param permissions the permissions to check for
+   *
+   * @throws AccessDeniedException3 if the user does not have the required permissions
+   */
+  public static void checkHasPermissions(MaintenanceTarget target, boolean checkAll, Permission... permissions) {
+    if (hasPermissions(target, checkAll, permissions)) {
+      return;
+    }
+
+    if (checkAll) {
+      Permission missing = Arrays.stream(permissions)
+        .filter(p -> !hasPermissions(target, true, p))
+        .findFirst()
+        .orElse(permissions[0]);
+      throwDenied(missing);
+    } else {
+      throwDenied(permissions[0]);
     }
   }
 

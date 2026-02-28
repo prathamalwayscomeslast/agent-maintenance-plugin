@@ -89,7 +89,7 @@
                 </td>
                 <td>${m.userid}</td>
 
-                <p:hasAnyPermission it="${c}" permissions="${action.CONFIGURE_AND_DISCONNECT}">
+                <j:if test="${action.hasDeletePermission()}">
                   <td>
                     <f:checkbox class="am__checkbox" name="${mid}"/>
                   </td>
@@ -102,11 +102,11 @@
                               tooltip="Delete this maintenance window for ${h.escape(c.displayName)}"/>
                     </div>
                   </td>
-                </p:hasAnyPermission>
-                <p:hasNoPermission it="${c}" permissions="${action.CONFIGURE_AND_DISCONNECT}">
+                </j:if>
+                <j:if test="${!action.hasDeletePermission()}">
                   <td/>
                   <td/>
-                </p:hasNoPermission>
+                </j:if>
               </tr>
             </j:forEach>
           </j:if>

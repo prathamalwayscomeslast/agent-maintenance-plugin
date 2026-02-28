@@ -70,7 +70,7 @@
                 <td>${m.reason}</td>
                 <td>${m.userid}</td>
 
-                <l:hasPermission it="${app}" permission="${app.ADMINISTER}">
+                <j:if test="${action.hasDeletePermission()}">
                   <td>
                     <f:checkbox class="am__checkbox" name="${mid}"/>
                   </td>
@@ -83,8 +83,8 @@
                               tooltip="Delete this maintenance window for ${h.escape(c.getDisplayName())}"/>
                     </div>
                   </td>
-                </l:hasPermission>
-                <j:if test="${!action.hasCloudDeletePermission()}">
+                </j:if>
+                <j:if test="${!action.hasDeletePermission()}">
                   <td/>
                   <td/>
                 </j:if>
