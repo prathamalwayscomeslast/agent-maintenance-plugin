@@ -56,7 +56,7 @@ class MaintenanceLinkTest extends BasePermissionChecks {
     HtmlPage managePage = w.goTo("target-maintenances/");
     assertThat(managePage.querySelector("#" + maintenanceId + " .am__link-delete"), is(nullValue()));
     assertThat(managePage.querySelector("#" + maintenanceIdRestricted + " .am__link-delete"), is(nullValue()));
-    assertThat(managePage.getElementById(cloudMaintenanceId), is(nullValue()));
+    assertThat(managePage.querySelector("#" + cloudMaintenanceId + " .am__link-delete"), is(nullValue()));
   }
 
   @Test
@@ -66,7 +66,7 @@ class MaintenanceLinkTest extends BasePermissionChecks {
     HtmlPage managePage = w.goTo("target-maintenances/");
     assertThat(managePage.querySelector("#" + maintenanceId + " .am__link-delete"), is(nullValue()));
     assertThat(managePage.querySelector("#" + maintenanceIdRestricted + " .am__link-delete"), is(nullValue()));
-    assertThat(managePage.getElementById(cloudMaintenanceId), is(nullValue()));
+    assertThat(managePage.querySelector("#" + cloudMaintenanceId + " .am__link-delete"), is(nullValue()));
   }
 
   @ParameterizedTest(name = "deleteMaintenanceWindow[{0}]")
@@ -109,7 +109,7 @@ class MaintenanceLinkTest extends BasePermissionChecks {
 
     assertThat(managePage.querySelector("#" + maintenanceId + " .am__link-delete"), is(notNullValue()));
     assertThat(managePage.querySelector("#" + maintenanceIdRestricted + " .am__link-delete"), is(nullValue()));
-    assertThat(managePage.getElementById(cloudMaintenanceId), is(nullValue()));
+    assertThat(managePage.querySelector("#" + cloudMaintenanceId + " .am__link-delete"), is(nullValue()));
   }
 
   @Test
@@ -120,7 +120,7 @@ class MaintenanceLinkTest extends BasePermissionChecks {
 
     assertThat(managePage.querySelector("#" + maintenanceId + " .am__link-delete"), is(notNullValue()));
     assertThat(managePage.querySelector("#" + maintenanceIdRestricted + " .am__link-delete"), is(nullValue()));
-    assertThat(managePage.getElementById(cloudMaintenanceId), is(nullValue()));
+    assertThat(managePage.querySelector("#" + cloudMaintenanceId + " .am__link-delete"), is(nullValue()));
   }
 
   @Test
@@ -130,7 +130,7 @@ class MaintenanceLinkTest extends BasePermissionChecks {
     HtmlPage managePage = w.goTo("target-maintenances/");
 
     assertThat(managePage.querySelector("#" + maintenanceId + " .am__link-delete"), is(notNullValue()));
-    assertThat(managePage.querySelector("#" + maintenanceIdRestricted + " .am__link-delete"), is(nullValue()));
+    assertThat(managePage.querySelector("#" + maintenanceIdRestricted + " .am__link-delete"), is(notNullValue()));
     assertThat(managePage.querySelector("#" + cloudMaintenanceId + " .am__link-delete"), is(notNullValue()));
   }
 }

@@ -447,7 +447,7 @@ public class MaintenanceAction implements Action {
   public void doEnable(StaplerResponse2 rsp) throws IOException {
     Computer c = getAgentComputer();
     if (c != null) {
-      PermissionManager.checkCanModify(target);
+      PermissionManager.checkHasPermissions(target, false, Computer.CONFIGURE);
       MaintenanceHelper.getInstance().injectRetentionStrategy(c);
     }
     rsp.sendRedirect(".");
@@ -463,7 +463,7 @@ public class MaintenanceAction implements Action {
   public void doDisable(StaplerResponse2 rsp) throws IOException {
     Computer c = getAgentComputer();
     if (c != null) {
-      PermissionManager.checkCanModify(target);
+      PermissionManager.checkHasPermissions(target, false, Computer.CONFIGURE);
       MaintenanceHelper.getInstance().removeRetentionStrategy(c);
     }
 

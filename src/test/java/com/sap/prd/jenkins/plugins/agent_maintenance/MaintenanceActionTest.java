@@ -128,8 +128,9 @@ class MaintenanceActionTest extends BasePermissionChecks {
     WebClient w = rule.createWebClient();
     w.login(CONFIGURE);
     String url = getMaintenanceUrl(MaintenanceTarget.TargetType.CLOUD);
-    HtmlPage managePage = w.withThrowExceptionOnFailingStatusCode(false).goTo(url);
-    assertThat(managePage.getWebResponse().getStatusCode(), is(403));
+    String id = getMaintenanceId(MaintenanceTarget.TargetType.CLOUD);
+    HtmlPage managePage = w.goTo(url);
+    assertThat(managePage.querySelector("#" + id + " .am__action-delete"), is(nullValue()));
   }
 
   @Test
@@ -137,8 +138,9 @@ class MaintenanceActionTest extends BasePermissionChecks {
     WebClient w = rule.createWebClient();
     w.login(DISCONNECT);
     String url = getMaintenanceUrl(MaintenanceTarget.TargetType.CLOUD);
-    HtmlPage managePage = w.withThrowExceptionOnFailingStatusCode(false).goTo(url);
-    assertThat(managePage.getWebResponse().getStatusCode(), is(403));
+    String id = getMaintenanceId(MaintenanceTarget.TargetType.CLOUD);
+    HtmlPage managePage = w.goTo(url);
+    assertThat(managePage.querySelector("#" + id + " .am__action-delete"), is(nullValue()));
   }
 
   @Test

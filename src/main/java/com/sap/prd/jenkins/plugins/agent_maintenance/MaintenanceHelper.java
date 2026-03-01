@@ -412,10 +412,8 @@ public class MaintenanceHelper {
       case CLOUD -> "clouds";
     };
     File targetDir = new File(Jenkins.get().getRootDir(), type);
-    if (!targetDir.exists()) {
-      if (!targetDir.mkdirs() && !targetDir.exists()) {
-        throw new IOException("Failed to create " + type + " directory: " + targetDir);
-      }
+    if (!targetDir.mkdirs() && !targetDir.exists()) {
+      throw new IOException("Failed to create " + type + " directory: " + targetDir);
     } else if (!targetDir.isDirectory()) {
       throw new IOException(targetDir + " is not a directory");
     }
@@ -433,13 +431,15 @@ public class MaintenanceHelper {
    * @param newName new name of the agent
    */
   public void renameAgent(String oldName, String newName) {
-    MaintenanceDefinitions md = cache.get(oldName);
+    MaintenanceTarget oldTarget = new MaintenanceTarget(MaintenanceTarget.TargetType.AGENT, oldName);
+    MaintenanceTarget newTarget = new MaintenanceTarget(MaintenanceTarget.TargetType.AGENT, newName);
+    MaintenanceDefinitions md = cache.get(oldTarget.toKey());
     if (md != null) {
       LOGGER.log(Level.FINEST, "Persisting existing maintenance windows after agent rename");
-      cache.remove(oldName);
-      cache.put(newName, md);
+      cache.remove(oldTarget.toKey());
+      cache.put(newTarget.toKey(), md);
       try {
-        saveMaintenanceWindows(newName, md);
+        saveMaintenanceWindows(newTarget.toKey(), md);
       } catch (IOException e) {
         LOGGER.log(Level.WARNING, "Failed to persists agent maintenance windows after agent rename {0}", newName);
       }
@@ -447,7 +447,8 @@ public class MaintenanceHelper {
   }
 
   public void createAgent(String nodeName) {
-    cache.put(nodeName, new MaintenanceDefinitions(new TreeSet<>(), new HashSet<>()));
+    MaintenanceTarget target = new MaintenanceTarget(MaintenanceTarget.TargetType.AGENT, nodeName);
+    cache.put(target.toKey(), new MaintenanceDefinitions(new TreeSet<>(), new HashSet<>()));
   }
 
   @Restricted(NoExternalUse.class)
@@ -491,6 +492,7 @@ public class MaintenanceHelper {
   public boolean removeRetentionStrategy(Computer c) {
     if (c instanceof SlaveComputer computer) {
       String computerName = computer.getName();
+      MaintenanceTarget target = new MaintenanceTarget(MaintenanceTarget.TargetType.AGENT, computerName);
       @SuppressWarnings("unchecked")
       RetentionStrategy<SlaveComputer> strategy = computer.getRetentionStrategy();
       if (strategy instanceof AgentMaintenanceRetentionStrategy maintenanceStrategy) {
@@ -499,8 +501,8 @@ public class MaintenanceHelper {
           node.setRetentionStrategy(maintenanceStrategy.getRegularRetentionStrategy());
           try {
             node.save();
-            deleteAgent(computerName);
-            XmlFile maintenanceFile = getMaintenanceWindowsFile(computerName);
+            deleteAgent(target.toKey());
+            XmlFile maintenanceFile = getMaintenanceWindowsFile(target.toKey());
             if (maintenanceFile.exists()) {
               maintenanceFile.delete();
             }
