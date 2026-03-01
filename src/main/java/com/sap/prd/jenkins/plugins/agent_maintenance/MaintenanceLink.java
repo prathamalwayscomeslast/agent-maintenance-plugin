@@ -44,8 +44,6 @@ import org.kohsuke.stapler.verb.POST;
 public class MaintenanceLink extends ManagementLink {
   private static final Logger LOGGER = Logger.getLogger(MaintenanceLink.class.getName());
 
-  private static final CloudUuidStore CLOUD_UUID_STORE = CloudUuidStore.getInstance();
-
   private transient Throwable error;
 
   @Override
@@ -114,8 +112,7 @@ public class MaintenanceLink extends ManagementLink {
     // New: Adding clouds to the list
     for (Cloud cloud : j.clouds) {
       try {
-        String uuid = CloudUuidStore.getInstance().getUuidIfPresent(cloud);
-        MaintenanceTarget target = new MaintenanceTarget(MaintenanceTarget.TargetType.CLOUD, cloud.name, uuid);
+        MaintenanceTarget target = new MaintenanceTarget(MaintenanceTarget.TargetType.CLOUD, cloud.name);
         MaintenanceAction action = new MaintenanceAction(target);
 
         if (action.hasMaintenanceWindows()) {
@@ -348,34 +345,15 @@ public class MaintenanceLink extends ManagementLink {
 
       MaintenanceWindow maintenanceWindow = new MaintenanceWindow(startTime, endTime, reason);
 
-      for (String cloudParam : cloudParams) {
-        String[] parts = cloudParam.split("::", 2);
-        if (parts.length != 2) {
-          LOGGER.log(Level.WARNING, "Invalid cloud parameter format: {0}", cloudParam);
-          continue;
-        }
-        String cloudName = parts[0];
-        String uuidStr = parts[1];
-        String uuid = "null".equals(uuidStr) ? null : uuidStr;
-        Cloud cloud = null;
-        if (uuid == null) {
-          cloud = j.getCloud(cloudName);
-        } else {
-          for (Cloud c : j.clouds) {
-            if (c.name.equals(cloudName) && uuid.equals(CLOUD_UUID_STORE.getUuidIfPresent(c))) {
-              cloud = c;
-              break;
-            }
-          }
-        }
-
+      for (String cloudName : cloudParams) {
+        Cloud cloud = j.clouds.getByName(cloudName);
         if (cloud == null) {
-          LOGGER.warning("Could not find cloud with name " + cloudName + " and UUID " + uuid);
+          LOGGER.warning("Could not find cloud: " + cloudName);
           continue;
         }
 
         try {
-          MaintenanceTarget target = new MaintenanceTarget(MaintenanceTarget.TargetType.CLOUD, cloud.name, uuid);
+          MaintenanceTarget target = new MaintenanceTarget(MaintenanceTarget.TargetType.CLOUD, cloud.name);
           MaintenanceHelper.getInstance().addMaintenanceWindow(target.toKey(), maintenanceWindow);
         } catch (Exception e) {
           LOGGER.log(Level.WARNING, "Error adding cloud maintenance window", e);
@@ -413,23 +391,6 @@ public class MaintenanceLink extends ManagementLink {
     }
     rsp.sendRedirect(".");
   }
-
-    /**
-     * Helper class for cloud selection in the UI.
-     */
-    public record CloudOption(String name, String uuid, String shortUuid, boolean hasDuplicate) {
-
-    public String getValue() {
-        return name + "::" + (uuid == null ? "null" : uuid);
-      }
-
-      public String getDisplayName() {
-        if (hasDuplicate) {
-          return name + " (" + shortUuid + ")";
-        }
-        return name;
-      }
-    }
 
   public Class<MaintenanceWindow> getMaintenanceWindowClass() {
     return MaintenanceWindow.class;

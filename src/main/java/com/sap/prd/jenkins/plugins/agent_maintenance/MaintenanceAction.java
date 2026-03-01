@@ -45,9 +45,6 @@ public class MaintenanceAction implements Action {
   @Restricted(NoExternalUse.class)
   public static final Permission[] CONFIGURE_AND_DISCONNECT = new Permission[]{Computer.DISCONNECT, Computer.CONFIGURE};
 
-  /**
-   * Creates MaintenanceAction. Including UUID for clouds.
-   */
   public MaintenanceAction(MaintenanceTarget target) {
     this.target = target;
   }
@@ -140,10 +137,10 @@ public class MaintenanceAction implements Action {
    * @return <code>Cloud</code> instance of the maintenance action.
    */
   public Cloud getCloud() {
-    if (!isCloud()) {
-      return null;
+    if (isCloud()) {
+      return Jenkins.get().getCloud(target.getName());
     }
-    return CloudUuidStore.getInstance().getCloudByTarget(target);
+    return null;
   }
 
   /**
