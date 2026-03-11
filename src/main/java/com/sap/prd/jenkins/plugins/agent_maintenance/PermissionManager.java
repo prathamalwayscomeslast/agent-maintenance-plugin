@@ -8,6 +8,7 @@ import jenkins.model.Jenkins;
 
 /**
  * Centralized permission manager for maintenance targets.
+ *
  * <p>
  * Permission rules:
  * <ul>
@@ -130,9 +131,9 @@ public final class PermissionManager {
 
     if (checkAll) {
       Permission missing = Arrays.stream(permissions)
-        .filter(p -> !hasPermissions(target, true, p))
-        .findFirst()
-        .orElse(permissions[0]);
+          .filter(p -> !hasPermissions(target, true, p))
+          .findFirst()
+          .orElse(permissions[0]);
       throwDenied(missing);
     } else {
       throwDenied(permissions[0]);

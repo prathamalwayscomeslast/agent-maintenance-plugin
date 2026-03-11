@@ -76,7 +76,7 @@
                   </td>
                   <td class="delete">
                     <div class="am__link-delete"
-                         data-message="${%deleteMaintenanceOf} ${c.getDisplayName()}"
+                         data-message="${%Delete Maintenance Window of} ${c.getDisplayName()}"
                          data-message-success="${%Maintenance window was successfully deleted}">
                       <l:icon src="symbol-trash-outline plugin-ionicons-api"
                               class="icon-sm icon-red am__table-icon"
@@ -87,7 +87,7 @@
                 <j:if test="${!action.hasDeletePermission()}">
                   <td/>
                   <td/>
-                </j:if>>
+                </j:if>
 
               </tr>
             </j:forEach>
