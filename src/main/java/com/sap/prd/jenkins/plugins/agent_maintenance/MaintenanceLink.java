@@ -103,7 +103,7 @@ public class MaintenanceLink extends ManagementLink {
       if (computer instanceof SlaveComputer) {
         MaintenanceTarget target = new MaintenanceTarget(MaintenanceTarget.TargetType.AGENT, node.getNodeName());
         MaintenanceAction action = new MaintenanceAction(target);
-        if (action.hasMaintenanceWindows()) {
+        if (action.hasMaintenanceWindows() || action.hasRecurringMaintenanceWindows()) {
           targetList.add(action);
         }
       }

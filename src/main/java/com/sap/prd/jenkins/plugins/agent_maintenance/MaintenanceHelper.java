@@ -108,6 +108,10 @@ public class MaintenanceHelper {
     return !getMaintenanceWindows(targetKey).isEmpty();
   }
 
+  public boolean hasRecurringMaintenanceWindows(String targetKey) throws IOException {
+    return !getRecurringMaintenanceWindows(targetKey).isEmpty() && cache.containsKey(targetKey);
+  }
+
   /**
    * Return whether there are active maintenance windows for a target.
    *

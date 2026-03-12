@@ -219,6 +219,14 @@ public class MaintenanceAction implements Action {
     }
   }
 
+  public boolean hasRecurringMaintenanceWindows() {
+    try {
+      return MaintenanceHelper.getInstance().hasRecurringMaintenanceWindows(target.toKey());
+    } catch (IOException e) {
+      return false;
+    }
+  }
+
   /**
    * Return whether there are active maintenance windows.
    *
