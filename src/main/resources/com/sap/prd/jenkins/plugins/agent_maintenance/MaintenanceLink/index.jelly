@@ -2,7 +2,7 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
          xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:p="/lib/permissions"
 >
-  <l:layout title="${%Planned Maintenances}" norefresh="true" permissions="${app.MANAGE_AND_SYSTEM_READ}">
+  <l:layout title="${%Agent &amp; Cloud Maintenances}" norefresh="true" permissions="${app.MANAGE_AND_SYSTEM_READ}">
     <st:include page="sidepanel.jelly" it="${app}"/>
     <l:header>
       <script src="${resURL}/jsbundles/components/row-selection-controller.js" type="text/javascript" defer="true"/>
@@ -11,10 +11,9 @@
     <l:main-panel>
       <st:bind var="maintenanceJavaScriptBind" value="${it}"/>
       <st:adjunct includes="com.sap.prd.jenkins.plugins.agent_maintenance.agent-maintenance"/>
-      <h1>${%Planned Agent Maintenances}</h1>
+
       <st:include class="${it.getMaintenanceLinkClass()}" page="agent-config.jelly"/>
 
-      <h1 style="margin-top:2em">${%Planned Cloud Maintenances}</h1>
       <st:include class="${it.getMaintenanceLinkClass()}" page="cloud-config.jelly"/>
 
     </l:main-panel>

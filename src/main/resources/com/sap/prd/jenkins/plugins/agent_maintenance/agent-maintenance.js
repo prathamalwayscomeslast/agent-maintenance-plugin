@@ -203,6 +203,31 @@ Behaviour.specify(".am__link-delete", 'agent-maintenance', 0, function (e) {
   }
 });
 
+Behaviour.specify(".am__link-delete-recurring", "agent-maintenance", 0, function(e) {
+  e.onclick = function() {
+    const row = this.closest("tr");
+    const id = row.id;
+    const targetKey = row.getAttribute("data-target-key");
+    const message = this.getAttribute("data-message");
+    dialog.confirm(message).then(() => {
+      maintenanceJavaScriptBind.deleteRecurringMaintenance(id, targetKey, function(response) {
+        let result = response.responseObject();
+        if (result) {
+          let tbody = row.parentNode;
+          tbody.removeChild(row);
+          notificationBar.show(messageSuccess, notificationBar.SUCCESS)
+          if (tbody.children.length == 0) {
+            document.getElementById("delete-selected-recurring-link").classList.add("jenkins-hidden");
+            document.getElementById("am__div--select").classList.add("jenkins-hidden");
+          }
+        } else {
+          notificationBar.show("Something went wrong. Please check the logs.", notificationBar.ERROR);
+        }
+      });
+    });
+  };
+});
+
 Behaviour.specify(".am__disable", 'agent-maintenance', 0, function (e) {
   e.onclick = function () {
     let message = this.getAttribute("data-message");
@@ -246,6 +271,18 @@ Behaviour.specify("#add-button-clouds", 'agent-maintenance', 0, function (e) {
 Behaviour.specify("#add-recurring", 'agent-maintenance', 0, function (e) {
   e.onclick = function () {
     openForm("recurring-maintenance-add-form")
+  };
+});
+
+Behaviour.specify("#add-link-button-clouds-recurring", "agent-maintenance", 0, function(e) {
+  e.onclick = function() {
+    openForm("cloud-link-recurring-add-form");
+  };
+});
+
+Behaviour.specify("#add-recurring-link", "agent-maintenance", 0, function(e) {
+  e.onclick = function() {
+    openForm("agent-link-recurring-maintenance-add-form");
   };
 });
 
@@ -418,6 +455,28 @@ Behaviour.specify("#delete-selected-button-link, #delete-selected-clouds", 'agen
     }
   }
 });
+
+Behaviour.specify(".am__panel-tab a", "agent-maintenance", 0, function(link) {
+  link.addEventListener("click", function(e) {
+    e.preventDefault();
+    const tab = link.closest(".am__panel-tab");
+    const bar = tab.closest(".tabBar");
+
+    bar.querySelectorAll(".am__panel-tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+
+    bar.querySelectorAll(".am__panel-tab").forEach(t => {
+      const p = document.getElementById(t.getAttribute("data-panel"));
+      if (p) p.style.display = "none";
+    });
+    const panel = document.getElementById(tab.getAttribute("data-panel"));
+    if (panel) panel.style.display = "";
+
+    const titleEl = document.getElementById(tab.getAttribute("data-title-target"));
+    if (titleEl) titleEl.textContent = tab.getAttribute("data-title");
+  });
+});
+
 
 Behaviour.specify("[data-select='all'], [data-select='none'], .jenkins-table__checkbox", 'agent-maintenance', 0, function (e) {
   e.addEventListener("click", function () {
